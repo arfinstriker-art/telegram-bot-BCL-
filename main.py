@@ -1,84 +1,34 @@
 import os
-import random
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+from openai import OpenAI
 
-BOT_TOKEN = os.getenv("8737522075:AAHBYriBBOTsmqvxoJJOvQVNwl62cl5gXpY")
+BOT_TOKEN = os.getenv("8737522075:AAHjTAOU_k5I_BTKIQJE1qfeYvfY1unXO6k")
+OPENAI_API_KEY = os.getenv("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")
 
-CHANNEL = "https://t.me/BCL_Cyber_Legion"
-CEO_ID = "@striker_arfin104"
+client = OpenAI(api_key=OPENAI_API_KEY)
 
-# 😎 Funny replies list
-funny_replies = [
-    "কি বলসো ভাই 😏🔥",
-    "এত সহজ না bro 😎",
-    "বুঝি নাই আবার বল 😂",
-    "তুই বেশ মজার মানুষ 😆",
-    "এইটা আবার কেমন কথা 🤨",
-    "হুম... চিন্তা করছি 🤔",
-    "এটা dangerous প্রশ্ন 😈🔥",
-    "মাথা নষ্ট করিস না bro 🤯😂"
-]
+SYSTEM_PROMPT = "You are a funny AI bot 😎"
 
-# 🔒 Join check
-async def is_joined(bot, user_id):
-    try:
-        member = await bot.get_chat_member(CHANNEL, user_id)
-        return member.status in ["member", "administrator", "creator"]
-    except:
-        return False
-
-# 🚀 Start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not await is_joined(context.bot, update.effective_user.id):
-        await update.message.reply_text(f"🚫 আগে channel join করো 😒👇\n{CHANNEL}")
-        return
+    await update.message.reply_text("🤖 Bot is alive bro 😎🔥")
 
-    await update.message.reply_text(
-        "😎🔥 BCL AI BOT এ স্বাগতম!\n"
-        "👉 কথা বল, মজা কর, প্রশ্ন কর 😏"
+async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_msg = update.message.text
+
+    res = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_msg}
+        ]
     )
 
-# 💬 Message
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not await is_joined(context.bot, update.effective_user.id):
-        await update.message.reply_text(f"🚫 আগে join করো 😑👇\n{CHANNEL}")
-        return
+    await update.message.reply_text(res.choices[0].message.content)
 
-    text = update.message.text.lower()
-
-    # 👑 কে বানাইছে
-    if "কে বানাইছে" in text or "who made" in text:
-        await update.message.reply_text(
-            "😎 আমাকে বানাইছে BANGLADESH CYBER LEGION CEO STRIKER ARFIN 🔥\n"
-            f"👑 CEO: {CEO_ID}"
-        )
-
-    # 🤖 নাম
-    elif "তোমার নাম" in text:
-        await update.message.reply_text("😎 আমার নাম BCL AI BOT 🔥")
-
-    # 🚀 টিম
-    elif "কোন টিম" in text:
-        await update.message.reply_text("🔥 আমি BANGLADESH CYBER LEGION টিমের 😎")
-
-    # 🎯 join
-    elif "টিমে ঢুকবো" in text or "join" in text:
-        await update.message.reply_text(
-            "😏 টিমে ঢুকতে চাইছো নাকি bro?\n"
-            f"👉 CEO কে নক দাও: {CEO_ID} 🔥"
-        )
-
-    # 😂 random fun reply
-    else:
-        reply = random.choice(funny_replies)
-        await update.message.reply_text(reply)
-
-# ▶️ Run
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply))
 
-print("Bot running...")
-app.run_polling()
+app.run_polliNN
